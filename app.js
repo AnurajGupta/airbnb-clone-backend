@@ -38,7 +38,7 @@ async function main() {
 app.use(
   cors({
     origin: corsOrigin,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     optionsSuccessStatus: 204,
   })
@@ -76,10 +76,17 @@ app.post(
             id: userDoc._id,
           },
           jwtSecret,
-          {},
+          { expiresIn: "1h" },
           (err, token) => {
-            if (err) throw err;
-            res.cookie("token", token).json(userDoc);
+            if (err) {
+              throw new ExpressError(422, "Incorrect Password!");
+            }
+            res
+              .cookie("token", token, {
+                secure: true,
+                sameSite: "None",
+              })
+              .json(userDoc);
           }
         );
       } else {
@@ -144,8 +151,8 @@ app.post(
   "/listings",
   wrapAsync(async (req, res) => {
     const { token } = req.cookies;
-    if(!token){
-      throw new ExpressError(401 , "User not logged In");
+    if (!token) {
+      throw new ExpressError(401, "User not logged In");
     }
     const {
       title,
@@ -177,7 +184,7 @@ app.post(
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
         throw new ExpressError(403, "Unauthorized user");
-      };
+      }
       const listing = await Listing.create({
         owner: userData.id,
         title,
@@ -201,8 +208,8 @@ app.put(
   "/listings",
   wrapAsync(async (req, res) => {
     const { token } = req.cookies;
-    if(!token){
-      throw new ExpressError(401 , "User not logged In");
+    if (!token) {
+      throw new ExpressError(401, "User not logged In");
     }
     const {
       id,
